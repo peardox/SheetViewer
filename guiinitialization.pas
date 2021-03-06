@@ -13,7 +13,7 @@ uses
   CastleViewport, CastleCameras,
   X3DNodes, X3DFields, X3DTIme,
   CastleImages, CastleGLImages,
-  CastleApplicationProperties, CastleLog, CastleTimeUtils, CastleKeysMouse;
+  CastleApplicationProperties, CastleLog, CastleTimeUtils, CastleKeysMouse, Types;
 
 type
   { TCastleForm }
@@ -22,6 +22,8 @@ type
     Window: TCastleControlBase;
     procedure FormDestroy(Sender: TObject);
     procedure FormCreate(Sender: TObject);
+    procedure FormMouseWheel(Sender: TObject; Shift: TShiftState;
+      WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
     procedure WindowClose(Sender: TObject);
     procedure WindowOpen(Sender: TObject);
   end;
@@ -43,6 +45,19 @@ begin
   Profiler.Enabled := true;
   InitializeLog;
   Caption := 'SheetViewer';
+end;
+
+procedure TCastleForm.FormMouseWheel(Sender: TObject; Shift: TShiftState;
+  WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
+begin
+  if(WheelDelta > 1) then
+    CastleApp.WheelZoom += 0.25
+  else
+    CastleApp.WheelZoom -= 0.25;
+  if(CastleApp.WheelZoom < 1) then
+    CastleApp.WheelZoom := 1;
+  if(CastleApp.WheelZoom > 8) then
+    CastleApp.WheelZoom := 8;
 end;
 
 procedure TCastleForm.FormDestroy(Sender: TObject);

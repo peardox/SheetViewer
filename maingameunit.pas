@@ -1,7 +1,6 @@
 unit MainGameUnit;
 
 {$mode objfpc}{$H+}
-// {$define use_licensed_characters}
 // {$define showcam}
 
 interface
@@ -33,21 +32,16 @@ type
     function  Motion(const Event: TInputMotion): Boolean; override; // TUIState
     function  Press(const Event: TInputPressRelease): Boolean; override; // TUIState
     function  Release(const Event: TInputPressRelease): Boolean; override; // TUIState
+    function  CheckAssets: String;
   private
-    CurrentMap: Integer;
     CurrentModel: Integer;
     CurrentAnimation: Integer;
     Viewport: TCastleViewport;
     Backport: TCastleViewport;
-    Birdport: TCastleViewport;
     Scene: TCastleScene;
     BackScene: TCastleScene;
-    BirdScene: TCastleScene;
     LabelModel: TCastleLabel;
-    LabelMap: TCastleLabel;
     LabelAnimation: TCastleLabel;
-    LabelFPS: TCastleLabel;
-    LabelRender: TCastleLabel;
     {$ifdef showcam}
     LabelCamPos: TCastleLabel;
     LabelCamDir: TCastleLabel;
@@ -58,6 +52,9 @@ type
     BtnNextModel: TCastleButton;
     BtnPrevModel: TCastleButton;
   public
+    LabelFPS: TCastleLabel; // Public for testing
+    LabelRender: TCastleLabel;
+    WheelZoom: Single;
     procedure CreateLabel(var objLabel: TCastleLabel; const Line: Integer; const BottomUp: Boolean = True);
     procedure CreateButton(var objButton: TCastleButton; const ButtonText: String; const Line: Integer; const LeftPos: Integer; const ButtonCode: TNotifyEvent = nil);
     procedure Start; override; // TUIState
@@ -78,15 +75,12 @@ var
   RenderReady: Boolean;
 
 const
-  {$if defined(use_licensed_characters)}
-  Models: Array[0..1] of String = ('Female_Mage', 'Mage_Base');
-  Maps: Array[0..3] of String = ('1', '2', '3', '4');
-  ModelTemplate: String =  'character';
-  {$else}
-  Models: Array[0..2] of String = ('Apex_Hunter', 'Apex_Predator', 'Apex_Stalker');
-  Maps: Array[0..7] of String = ('1', '2', '3', '4', '5', '6', '7', '8');
-  ModelTemplate: String =  'apex';
-  {$endif}
+  Models: Array[0..5] of String = ('Abberation_SideViewBattler_Large',
+               'CarniverousPlant_SideViewBattler_Large',
+               'DaemonBone_SideViewBattler_Large',
+               'DaemonHowler_SideViewBattler_Large',
+               'DaemonInfernalGreater_SideViewBattler_Large',
+               'DaemonInfernal_SideViewBattler_Large');
 
 
 implementation
@@ -159,39 +153,11 @@ begin
   // Add the viewport to the CGE control
   InsertFront(Viewport);
 
-  // Set up the background viewport
-  Birdport := TCastleViewport.Create(Application);
-  Birdport.FullSize := true;
-  Birdport.Setup2D;
-  Birdport.AutoNavigation := True;
-  Birdport.Camera.Orthographic.Origin := Vector2(0.5, 0.5);
-  Birdport.Camera.Direction := Vector3(-1, -1, -1);
-  Birdport.Transparent := True;
-  InsertFront(Birdport);
-
-  // Hacky load inline of parrot in Isometric view
-  if not(BirdScene = nil) then
-    FreeAndNil(BirdScene);
-  BirdScene := TCastleScene.Create(Application);
-  BirdScene.RenderOptions.MinificationFilter := minNearest;
-  BirdScene.RenderOptions.MagnificationFilter := magNearest;
-  BirdScene.Spatial := [ssDynamicCollisions, ssRendering];
-  BirdScene.Setup2D;
-  BirdScene.PrepareResources([prSpatial, prRenderSelf, prRenderClones, prScreenEffects],
-      True,
-      Birdport.PrepareParams);
-
-//  BirdScene.Load('castle-data:/parrot.glb');
-  BirdScene.Load('castle-data:/cross3.x3dv');
-  BirdScene.Scale := Vector3(2.12765957447, 2.12765957447, 2.12765957447);
-  Birdport.Items.Add(BirdScene);
-  Birdport.Items.MainScene := BirdScene;
-
   // Some Buttons
-  CreateButton(BtnPrevAnim, 'Prev  Anim', 5, 0, @PrevAnimButtonClick);
-  CreateButton(BtnNextAnim, 'Next  Anim', 5, 8, @NextAnimButtonClick);
-  CreateButton(BtnPrevModel, 'Prev Model', 6, 0, @PrevModelButtonClick);
-  CreateButton(BtnNextModel, 'Next Model', 6, 8, @NextModelButtonClick);
+  CreateButton(BtnPrevAnim, 'Prev  Anim', 6, 0, @PrevAnimButtonClick);
+  CreateButton(BtnNextAnim, 'Next  Anim', 6, 8, @NextAnimButtonClick);
+  CreateButton(BtnPrevModel, 'Prev Model', 8, 0, @PrevModelButtonClick);
+  CreateButton(BtnNextModel, 'Next Model', 8, 8, @NextModelButtonClick);
 
   // Some Labels
   {$ifdef showcam}
@@ -201,10 +167,9 @@ begin
   {$endif}
 
   CreateLabel(LabelModel, 4);
-  CreateLabel(LabelMap, 3);
-  CreateLabel(LabelAnimation, 2);
-  CreateLabel(LabelFPS, 1);
-  CreateLabel(LabelRender, 0);
+  CreateLabel(LabelAnimation, 3);
+  CreateLabel(LabelRender, 2);
+  CreateLabel(LabelFPS, 0);
 end;
 
 procedure TCastleApp.NextAnimButtonClick(Sender: TObject);
@@ -216,28 +181,17 @@ begin
     end
   else
     begin
-      if CurrentMap < (Length(Maps) - 1) then
+      if CurrentModel < (Length(Models) - 1) then
         begin
-          Inc(CurrentMap);
+          Inc(CurrentModel);
           CurrentAnimation := 0;
-          LoadScene('castle-data:/PVGames_ApexPredators/' + Models[CurrentModel] + '/' + ModelTemplate + '_map_' + Maps[CurrentMap] + '.starling-xml', CurrentModel, CurrentAnimation);
+          LoadScene('castle-data:/' + Models[CurrentModel] + '_map_1' + '.starling-xml', CurrentModel, CurrentAnimation);
         end
       else
         begin
-          if CurrentModel < (Length(Models) - 1) then
-            begin
-              Inc(CurrentModel);
-              CurrentMap := 0;
-              CurrentAnimation := 0;
-              LoadScene('castle-data:/PVGames_ApexPredators/' + Models[CurrentModel] + '/' + ModelTemplate + '_map_' + Maps[CurrentMap] + '.starling-xml', CurrentModel, CurrentAnimation);
-            end
-          else
-            begin
-              CurrentModel := 0;
-              CurrentMap := 0;
-              CurrentAnimation := 0;
-              LoadScene('castle-data:/PVGames_ApexPredators/' + Models[CurrentModel] + '/' + ModelTemplate + '_map_' + Maps[CurrentMap] + '.starling-xml', CurrentModel, CurrentAnimation);
-            end;
+          CurrentModel := 0;
+          CurrentAnimation := 0;
+          LoadScene('castle-data:/' + Models[CurrentModel] + '_map_1' + '.starling-xml', CurrentModel, CurrentAnimation);
         end;
     end;
     UpdateAnimationLabels;
@@ -252,32 +206,10 @@ begin
     end
   else
     begin
-      if CurrentMap > 0 then
-        begin
-          Dec(CurrentMap);
-          LoadScene('castle-data:/PVGames_ApexPredators/' + Models[CurrentModel] + '/' + ModelTemplate + '_map_' + Maps[CurrentMap] + '.starling-xml', CurrentModel, 0, false);
-          CurrentAnimation := Scene.AnimationsList.Count - 1;
-          Scene.PlayAnimation(Scene.AnimationsList[CurrentAnimation], true);
-        end
-      else
-        begin
-          if CurrentModel > 0 then
-            begin
-              Dec(CurrentModel);
-              CurrentMap := Length(Maps) - 1;
-              LoadScene('castle-data:/PVGames_ApexPredators/' + Models[CurrentModel] + '/' + ModelTemplate + '_map_' + Maps[CurrentMap] + '.starling-xml', CurrentModel, 0, false);
-              CurrentAnimation := Scene.AnimationsList.Count - 1;
-              Scene.PlayAnimation(Scene.AnimationsList[CurrentAnimation], true);
-            end
-          else
-            begin
-              CurrentModel := Length(Models) - 1;
-              CurrentMap := Length(Maps) - 1;
-              LoadScene('castle-data:/PVGames_ApexPredators/' + Models[CurrentModel] + '/' + ModelTemplate + '_map_' + Maps[CurrentMap] + '.starling-xml', CurrentModel, 0, false);
-              CurrentAnimation := Scene.AnimationsList.Count - 1;
-              Scene.PlayAnimation(Scene.AnimationsList[CurrentAnimation], true);
-            end;
-        end;
+      CurrentModel := Length(Models) - 1;
+      LoadScene('castle-data:/' + Models[CurrentModel] + '_map_1' + '.starling-xml', CurrentModel, 0, false);
+      CurrentAnimation := Scene.AnimationsList.Count - 1;
+      Scene.PlayAnimation(Scene.AnimationsList[CurrentAnimation], true);
     end;
   UpdateAnimationLabels;
 end;
@@ -287,12 +219,12 @@ begin
   if CurrentModel < (Length(Models) - 1) then
     begin
       Inc(CurrentModel);
-      LoadScene('castle-data:/PVGames_ApexPredators/' + Models[CurrentModel] + '/' + ModelTemplate + '_map_' + Maps[CurrentMap] + '.starling-xml', CurrentModel, CurrentAnimation);
+      LoadScene('castle-data:/' + Models[CurrentModel] + '_map_1' + '.starling-xml', CurrentModel, CurrentAnimation);
     end
   else
     begin
       CurrentModel := 0;
-      LoadScene('castle-data:/PVGames_ApexPredators/' + Models[CurrentModel] + '/' + ModelTemplate + '_map_' + Maps[CurrentMap] + '.starling-xml', CurrentModel, CurrentAnimation);
+      LoadScene('castle-data:/' + Models[CurrentModel] + '_map_1' + '.starling-xml', CurrentModel, CurrentAnimation);
     end;
   UpdateAnimationLabels;
 end;
@@ -302,12 +234,12 @@ begin
   if CurrentModel > 0 then
     begin
       Dec(CurrentModel);
-      LoadScene('castle-data:/PVGames_ApexPredators/' + Models[CurrentModel] + '/' + ModelTemplate + '_map_' + Maps[CurrentMap] + '.starling-xml', CurrentModel, CurrentAnimation);
+      LoadScene('castle-data:/' + Models[CurrentModel] + '_map_1' + '.starling-xml', CurrentModel, CurrentAnimation);
     end
   else
     begin
       CurrentModel := Length(Models) - 1;
-      LoadScene('castle-data:/PVGames_ApexPredators/' + Models[CurrentModel] + '/' + ModelTemplate + '_map_' + Maps[CurrentMap] + '.starling-xml', CurrentModel, CurrentAnimation);
+      LoadScene('castle-data:/' + Models[CurrentModel] + '_map_1' + '.starling-xml', CurrentModel, CurrentAnimation);
     end;
 end;
 
@@ -363,20 +295,41 @@ begin
   LabelModel.Caption := Models[CurrentModel] +
                         ' (' + IntToStr(CurrentModel + 1) +
                         ' of ' + IntToStr(Length(Models)) + ')';
-  LabelMap.Caption := 'TextureAtlas' +
-                        ' (' + IntToStr(CurrentMap + 1) +
-                        ' of ' + IntToStr(Length(Maps)) + ')';
   LabelAnimation.Caption := 'Animation : ' + Scene.AnimationsList[CurrentAnimation] +
                         ' (' + IntToStr(CurrentAnimation + 1) +
                         ' of ' + IntToStr(Scene.AnimationsList.Count) + ')';
 end;
 
+function TCastleApp.CheckAssets: String;
+var
+  i: Integer;
+begin
+  Result := EmptyStr;
+  for i:= 0 to Length(Models) - 1 do
+    begin
+      if not URIFileExists('castle-data:/' + Models[i] + '_map_1' + '.starling-xml')then
+        Result += 'data' + DirectorySeparator + Models[i] + '_map_1' + '.starling-xml' + LineEnding;
+      if not URIFileExists('castle-data:/' + Models[i] + '.png') then
+        Result += 'data' + DirectorySeparator + Models[i] + '.png' + LineEnding;
+    end;
+end;
+
 procedure TCastleApp.Start;
+var
+  assets: String;
 begin
   inherited;
-  CurrentMap := 0;
+  assets := CheckAssets;
+  if not(assets = EmptyStr) then
+    begin
+      ShowMessage('The following assets are missing ...' + LineEnding +
+        LineEnding + assets + LineEnding +
+        'Please READ the file readme.txt');
+      Application.Terminate;
+    end;
   CurrentModel := 0;
   CurrentAnimation := 0;
+  WheelZoom := 1;
   Scene := nil;
   LoadViewport;
   PrepDone := True;
@@ -395,12 +348,14 @@ var
 begin
   inherited;
   LabelFPS.Caption := 'FPS = ' + FormatFloat('####0.00', Container.Fps.RealFps);
-  LabelRender.Caption := 'Render = ' + FormatFloat('####0.00', Container.Fps.OnlyRenderFps);
+  LabelRender.Caption := 'Zoom = ' + FormatFloat('####0.00', WheelZoom);
+  if not(Scene = nil) then
+    Scene.Scale := Vector3(WheelZoom, WheelZoom, WheelZoom);
 {$ifdef showcam}
-  if not(BirdScene = nil) then
+  if not(Viewport = nil) then
     begin
-    Birdport.Camera.GetView(Pos, Dir, Up);
-{
+    Viewport.Camera.GetView(Pos, Dir, Up);
+
     LabelCamPos.Caption := 'Cam Pos : ' +
       FormatFloat('####0.00', Pos.X) + ', ' +
       FormatFloat('####0.00', Pos.Y) + ', ' +
@@ -415,15 +370,6 @@ begin
         FormatFloat('####0.00', Up.X) + ', ' +
         FormatFloat('####0.00', Up.Y) + ', ' +
         FormatFloat('####0.00', Up.Z);
-
-}
-    LabelCamPos.Caption := 'Origin : ' + Birdport.Camera.Orthographic.Origin.ToString;
-
-    LabelCamDir.Caption := 'Window Size : ' + FloatToStr(Container.Width) + ' x ' +
-                           FloatToStr(Container.Height);
-    LabelCamUp.Caption := 'Effective Size: ' + FloatToStr(
-    Birdport.Camera.Orthographic.EffectiveWidth) + ' x ' + FloatToStr(
-    Birdport.Camera.Orthographic.EffectiveHeight);
     end;
 {$endif}
 end;
@@ -435,15 +381,13 @@ begin
   if PrepDone and GLInitialized and RenderReady then
     begin
       PrepDone := False;
-      LoadScene('castle-data:/PVGames_ApexPredators/' + Models[CurrentModel] + '/' + ModelTemplate + '_map_' + Maps[CurrentMap] + '.starling-xml', CurrentModel, CurrentAnimation);
+      LoadScene('castle-data:/' + Models[CurrentModel] + '_map_1' + '.starling-xml', CurrentModel, CurrentAnimation);
     end;
   RenderReady := True;
 end;
 
 procedure TCastleApp.Resize;
 begin
-//  With Birdport.Camera do
-//  SetView(Vector3(Orthographic.EffectiveWidth / 2, Orthographic.EffectiveHeight / 2, 500), Vector3(-1, -1, -1), Vector3(0, 1, 0));
   inherited;
 end;
 

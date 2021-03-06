@@ -33,12 +33,7 @@ backup/
 *.bak
 lib/
 castle-engine-output/
-data/PVGames_ApexPredators/Apex_Hunter/*png
-data/PVGames_ApexPredators/Apex_Predator/*png
-data/PVGames_ApexPredators/Apex_Stalker/*png
-data/PVGames_ApexPredators/*docx
-data/PVGames_ApexPredators/Female_Mage/*png
-data/PVGames_ApexPredators/Mage_Base/*png
+data/*png
 
 # Application bundle for Mac OS
 *.app/

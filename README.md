@@ -60,3 +60,5 @@ castle-engine package  --target=ios
 
 Install on a device or use simulator
 
+##### Copyright/Attribution Notice: 
+Sprite created by Puffolotti Accident
