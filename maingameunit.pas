@@ -19,7 +19,9 @@ uses
   X3DNodes, X3DFields, X3DTIme, X3DLoad,
   CastleImages, CastleGLImages, CastleDownload,
   CastleTextureImages, CastleCompositeImage,
-  CastleApplicationProperties, CastleLog, CastleTimeUtils, CastleKeysMouse;
+  CastleApplicationProperties, CastleLog,
+  CastleTimeUtils, CastleKeysMouse,
+  MiscFunctions;
 
 type
   { TCastleApp }
@@ -82,6 +84,7 @@ const
                'DaemonInfernalGreater_SideViewBattler_Large',
                'DaemonInfernal_SideViewBattler_Large');
 
+function DetectSheetLayout(const filename: String): TVector2Integer;
 
 implementation
 {$ifdef cgeapp}
@@ -300,6 +303,84 @@ begin
                         ' of ' + IntToStr(Scene.AnimationsList.Count) + ')';
 end;
 
+function DetectSheetLayout(const filename: String): TVector2Integer;
+var
+  ProcTimer: Int64;
+  Layout: TVector2Integer;
+  LayoutX, LayoutY: TBooleanArray;
+  Texture: TRGBAlphaImage;
+  Alpha: TGrayScaleImage;
+  AlphaFile: String;
+  idx, cnt: Integer;
+begin
+  try
+    Texture := LoadImage(filename, [TRGBAlphaImage]) as TRGBAlphaImage;
+
+    AlphaFile := filename + '.alpha.png';
+    if not URIFileExists(AlphaFile) then
+      begin
+        Alpha := ExtractAlpha(Texture);
+        SaveImage(Alpha, AlphaFile);
+        FreeAndNil(Alpha);
+      end;
+
+    ProcTimer := CastleGetTickCount64;
+    LayoutX := ScanForTransparentRows(Texture);
+    ProcTimer := CastleGetTickCount64 - ProcTimer;
+
+    if not(LayoutX = nil) then
+      begin
+        cnt := 0;
+        for idx := 0 to Length(LayoutX) - 1 do
+          begin
+            if not(LayoutX[idx]) then
+              begin
+                Inc(cnt);
+              end;
+          end;
+
+        WriteLnLog(filename + LineEnding + ' - ScanForTransparentRows = ' + IntToStr(Length(LayoutX)) +
+          ' recs, ' + IntToStr(cnt) + ' in use, time = ' +
+          FormatFloat('####0.000000', ProcTimer / 1000) + ' seconds');
+
+      end;
+
+
+    ProcTimer := CastleGetTickCount64;
+    LayoutY := ScanForTransparentColumns(Texture);
+    ProcTimer := CastleGetTickCount64 - ProcTimer;
+
+    if not(LayoutY = nil) then
+      begin
+        cnt := 0;
+        for idx := 0 to Length(LayoutY) - 1 do
+          begin
+            if not(LayoutY[idx]) then
+              begin
+                Inc(cnt);
+              end;
+          end;
+
+        WriteLnLog(filename + LineEnding + ' - ScanForTransparentColumns = ' + IntToStr(Length(LayoutY)) +
+          ' recs, ' + IntToStr(cnt) + ' in use, time = ' +
+          FormatFloat('####0.000000', ProcTimer / 1000) + ' seconds');
+
+      end;
+  except
+    on E : Exception do
+      begin
+        ShowMessage('Exception' + LineEnding +
+                    'Trying to load : ' + filename + LineEnding +
+                     E.ClassName + LineEnding +
+                     E.Message);
+        Texture := nil;
+       end;
+  end;
+  FreeAndNil(Texture);
+
+  Result := Vector2Integer(1, 1);
+end;
+
 function TCastleApp.CheckAssets: String;
 var
   i: Integer;
@@ -310,7 +391,9 @@ begin
       if not URIFileExists('castle-data:/' + Models[i] + '_map_1' + '.starling-xml')then
         Result += 'data' + DirectorySeparator + Models[i] + '_map_1' + '.starling-xml' + LineEnding;
       if not URIFileExists('castle-data:/' + Models[i] + '.png') then
-        Result += 'data' + DirectorySeparator + Models[i] + '.png' + LineEnding;
+        Result += 'data' + DirectorySeparator + Models[i] + '.png' + LineEnding
+      else
+        DetectSheetLayout('castle-data:/' + Models[i] + '.png');
     end;
 end;
 
