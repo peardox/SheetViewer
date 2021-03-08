@@ -306,15 +306,18 @@ end;
 function DetectSheetLayout(const filename: String): TVector2Integer;
 var
   ProcTimer: Int64;
-  Layout: TVector2Integer;
-  LayoutX, LayoutY: TBooleanArray;
+  LayoutX: TLineArray;
+  LayoutY: TLineArray;
   Texture: TRGBAlphaImage;
   Alpha: TGrayScaleImage;
   AlphaFile: String;
-  idx, cnt: Integer;
+  idx: Integer;
 begin
   try
     Texture := LoadImage(filename, [TRGBAlphaImage]) as TRGBAlphaImage;
+
+    WriteLnLog('Scanning : ' + filename);
+    WriteLnLog('Hash : ' + HashFile(filename));
 
     AlphaFile := filename + '.alpha.png';
     if not URIFileExists(AlphaFile) then
@@ -330,19 +333,17 @@ begin
 
     if not(LayoutX = nil) then
       begin
-        cnt := 0;
-        for idx := 0 to Length(LayoutX) - 1 do
-          begin
-            if not(LayoutX[idx]) then
-              begin
-                Inc(cnt);
-              end;
-          end;
-
-        WriteLnLog(filename + LineEnding + ' - ScanForTransparentRows = ' + IntToStr(Length(LayoutX)) +
-          ' recs, ' + IntToStr(cnt) + ' in use, time = ' +
+        WriteLnLog('ScanForTransparentRows = ' + IntToStr(Length(LayoutX)) +
+          ' recs time = ' +
           FormatFloat('####0.000000', ProcTimer / 1000) + ' seconds');
 
+        for idx := 0 to Length(LayoutX) - 1 do
+          begin
+            WriteLnLog('LineSeg #' + IntToStr(idx) + ' = ' +
+              FloatToStr(LayoutX[idx].Items[0]) + ' - ' +
+              FloatToStr(LayoutX[idx].Items[1]) + ' : Length = ' +
+              FloatToStr(LayoutX[idx].Items[1] - LayoutX[idx].Items[0] + 1));
+          end;
       end;
 
 
@@ -352,19 +353,17 @@ begin
 
     if not(LayoutY = nil) then
       begin
-        cnt := 0;
-        for idx := 0 to Length(LayoutY) - 1 do
-          begin
-            if not(LayoutY[idx]) then
-              begin
-                Inc(cnt);
-              end;
-          end;
-
-        WriteLnLog(filename + LineEnding + ' - ScanForTransparentColumns = ' + IntToStr(Length(LayoutY)) +
-          ' recs, ' + IntToStr(cnt) + ' in use, time = ' +
+        WriteLnLog('ScanForTransparentColumns = ' + IntToStr(Length(LayoutY)) +
+          ' recs time = ' +
           FormatFloat('####0.000000', ProcTimer / 1000) + ' seconds');
 
+        for idx := 0 to Length(LayoutY) - 1 do
+          begin
+            WriteLnLog('LineSeg #' + IntToStr(idx) + ' = ' +
+              FloatToStr(LayoutY[idx].Items[0]) + ' - ' +
+              FloatToStr(LayoutY[idx].Items[1]) + ' : Length = ' +
+              FloatToStr(LayoutY[idx].Items[1] - LayoutY[idx].Items[0] + 1));
+          end;
       end;
   except
     on E : Exception do
@@ -395,6 +394,7 @@ begin
       else
         DetectSheetLayout('castle-data:/' + Models[i] + '.png');
     end;
+  DetectSheetLayout('castle-data:/blip.png');
 end;
 
 procedure TCastleApp.Start;

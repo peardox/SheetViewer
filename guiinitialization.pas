@@ -5,25 +5,34 @@ unit GUIInitialization;
 interface
 
 uses
-  Classes, SysUtils, Math, CastleUIState,
-  Forms, Controls, Graphics, Dialogs, CastleControl, MainGameUnit,
-  CastleControls, CastleColors, CastleUIControls,
-  CastleTriangles, CastleShapes, CastleVectors,
-  CastleSceneCore, CastleScene, CastleTransform,
-  CastleViewport, CastleCameras,
-  X3DNodes, X3DFields, X3DTIme,
-  CastleImages, CastleGLImages,
-  CastleApplicationProperties, CastleLog, CastleTimeUtils, CastleKeysMouse, Types;
+  Classes, SysUtils, Math, CastleUIState, Forms, Controls, Graphics, Dialogs,
+  StdCtrls, ExtCtrls, Menus, ComCtrls, CastleControl, MainGameUnit,
+  CastleControls, CastleColors, CastleUIControls, CastleTriangles, CastleShapes,
+  CastleVectors, CastleSceneCore, CastleScene, CastleTransform, CastleViewport,
+  CastleCameras, X3DNodes, X3DFields, X3DTIme, CastleImages, CastleGLImages,
+  CastleApplicationProperties, CastleLog, CastleTimeUtils, CastleKeysMouse,
+  CastleFilesUtils, Types;
 
 type
   { TCastleForm }
 
   TCastleForm = class(TForm)
+    MainMenu1: TMainMenu;
+    Memo1: TMemo;
+    MenuItem1: TMenuItem;
+    MenuItem2: TMenuItem;
+    PanelViewport: TPanel;
+    PanelPicker: TPanel;
+    SelectDirectoryDialog1: TSelectDirectoryDialog;
+    Splitter1: TSplitter;
+    TreeView1: TTreeView;
     Window: TCastleControlBase;
     procedure FormDestroy(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormMouseWheel(Sender: TObject; Shift: TShiftState;
       WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
+    procedure MenuItem2Click(Sender: TObject);
+    procedure WindowBeforeRender(Sender: TObject);
     procedure WindowClose(Sender: TObject);
     procedure WindowOpen(Sender: TObject);
   end;
@@ -41,10 +50,11 @@ begin
   WindowState := wsFullScreen;
   {$endif}
   AppTime := CastleGetTickCount64;
+  InitializeLog;
   PrepDone := False;
   Profiler.Enabled := true;
-  InitializeLog;
   Caption := 'SheetViewer';
+  Memo1.Clear;
 end;
 
 procedure TCastleForm.FormMouseWheel(Sender: TObject; Shift: TShiftState;
@@ -58,6 +68,25 @@ begin
     CastleApp.WheelZoom := 1;
   if(CastleApp.WheelZoom > 8) then
     CastleApp.WheelZoom := 8;
+end;
+
+procedure TCastleForm.MenuItem2Click(Sender: TObject);
+begin
+  Memo1.Lines.Add('ApplicationConfig = ' + ApplicationConfig(''));
+  Memo1.Lines.Add('ApplicationData = ' + ApplicationData(''));
+
+  SelectDirectoryDialog1.InitialDir := ApplicationData('');
+  if SelectDirectoryDialog1.Execute then
+      Memo1.Lines.Add('executed')
+  else
+      Memo1.Lines.Add('not executed');
+
+    Memo1.Lines.Add(' Dir = ' + SelectDirectoryDialog1.FileName);
+end;
+
+procedure TCastleForm.WindowBeforeRender(Sender: TObject);
+begin
+
 end;
 
 procedure TCastleForm.FormDestroy(Sender: TObject);
