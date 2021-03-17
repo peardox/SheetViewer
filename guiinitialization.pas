@@ -75,13 +75,13 @@ begin
   Memo1.Lines.Add('ApplicationConfig = ' + ApplicationConfig(''));
   Memo1.Lines.Add('ApplicationData = ' + ApplicationData(''));
 
-  SelectDirectoryDialog1.InitialDir := ApplicationData('');
+  SelectDirectoryDialog1.InitialDir := 'C:\temp\Models\work\svdata'; // ApplicationData('');
   if SelectDirectoryDialog1.Execute then
       Memo1.Lines.Add('executed')
   else
       Memo1.Lines.Add('not executed');
 
-    Memo1.Lines.Add(' Dir = ' + SelectDirectoryDialog1.FileName);
+  Memo1.Lines.Add(' Dir = ' + SelectDirectoryDialog1.FileName);
 end;
 
 procedure TCastleForm.WindowBeforeRender(Sender: TObject);

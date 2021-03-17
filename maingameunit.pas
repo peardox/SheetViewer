@@ -84,7 +84,7 @@ const
                'DaemonInfernalGreater_SideViewBattler_Large',
                'DaemonInfernal_SideViewBattler_Large');
 
-function DetectSheetLayout(const filename: String): TVector2Integer;
+function DetectSheetLayout(const filename: String; CreateAlpha: Boolean = False): TVector2Integer;
 
 implementation
 {$ifdef cgeapp}
@@ -303,7 +303,7 @@ begin
                         ' of ' + IntToStr(Scene.AnimationsList.Count) + ')';
 end;
 
-function DetectSheetLayout(const filename: String): TVector2Integer;
+function DetectSheetLayout(const filename: String; CreateAlpha: Boolean = False): TVector2Integer;
 var
   ProcTimer: Int64;
   LayoutX: TLineArray;
@@ -318,6 +318,7 @@ begin
 
     WriteLnLog('Scanning : ' + filename);
     WriteLnLog('Hash : ' + HashFile(filename));
+    WriteLnLog('Size : ' + IntToStr(Texture.Width) + ' x ' + IntToStr(Texture.Height));
 
     AlphaFile := filename + '.alpha.png';
     if not URIFileExists(AlphaFile) then
@@ -392,9 +393,12 @@ begin
       if not URIFileExists('castle-data:/' + Models[i] + '.png') then
         Result += 'data' + DirectorySeparator + Models[i] + '.png' + LineEnding
       else
-        DetectSheetLayout('castle-data:/' + Models[i] + '.png');
+        DetectSheetLayout('castle-data:/' + Models[i] + '.png', True);
     end;
-  DetectSheetLayout('castle-data:/blip.png');
+  DetectSheetLayout('castle-data:/blip.png', True);
+  DetectSheetLayout('C:\temp\Models\work\svdata\Male_Battleguard\Battleguard_Base\Sprite_1.png');
+  DetectSheetLayout('C:\temp\Models\work\svdata\2_Berry\Berry_SideViewBattler_Large.png');
+  DetectSheetLayout('C:\Users\simon\Downloads\humble-2017-10-04\PVGames\Iggy_Spritesheets\Iggy_walking.png');
 end;
 
 procedure TCastleApp.Start;

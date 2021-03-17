@@ -1,0 +1,88 @@
+{
+	"templates": {
+		"name": "mvsv5",
+		"description": "Sideview Battler - Five Frame",
+		"sheet_count": 1,
+    "layer": 0,
+    "frame_layout": "FixedAspect",
+    "sheet_frames_width": 15,
+    "sheet_frames_height": 6,
+		"sheets": [{
+				"animations": [{
+						"action": "Idle",
+						"frames": 5,
+						"loop": true
+					}, {
+						"action": "Stabbing",
+						"frames": 5,
+						"loop": false
+					}, {
+						"action": "Escape",
+						"frames": 5,
+						"loop": false
+					}, {
+						"action": "ReadyPhysical",
+						"frames": 5,
+						"loop": true
+					}, {
+						"action": "Swinging",
+						"frames": 5,
+						"loop": false
+					}, {
+						"action": "Victory",
+						"frames": 5,
+						"loop": true
+					}, {
+						"action": "ReadyMagical",
+						"frames": 5,
+						"loop": true
+					}, {
+						"action": "Shooting",
+						"frames": 5,
+						"loop": false
+					}, {
+						"action": "CrisisDanger",
+						"frames": 5,
+						"loop": true
+					}, {
+						"action": "Guard",
+						"frames": 5,
+						"loop": true
+					}, {
+						"action": "UsePhysicalSkill",
+						"frames": 5,
+						"loop": false
+					}, {
+						"action": "AbnormalState",
+						"frames": 5,
+						"loop": true
+					}, {
+						"action": "Damage",
+						"frames": 5,
+						"loop": false
+					}, {
+						"action": "UseMagicalSkill",
+						"frames": 5,
+						"loop": false
+					}, {
+						"action": "Sleeping",
+						"frames": 5,
+						"loop": true
+					}, {
+						"action": "Evade",
+						"frames": 5,
+						"loop": false
+					}, {
+						"action": "UseItem",
+						"frames": 5,
+						"loop": false
+					}, {
+						"action": "Dead",
+						"frames": 5,
+						"loop": true
+					}
+				]
+			}
+		]
+	}
+}
